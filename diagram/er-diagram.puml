@@ -1,0 +1,177 @@
+@startuml ER Diagram - Supply Chain Fuel Distribution B2B
+!theme plain
+skinparam linetype ortho
+skinparam roundcorner 8
+skinparam EntityBorderColor #3B5998
+skinparam EntityBackgroundColor #EEF2FF
+skinparam EntityFontStyle bold
+
+title Supply Chain Fuel App — Entity Relationship Diagram\n(Kelompok 9 — Sistem Supply Chain & Distribusi Bahan Bakar B2B)
+
+' ─── AUTHENTICATION & COMPANY ───────────────────────────────────
+entity "companies" as companies {
+  * id : BIGINT <<PK, AUTO_INCREMENT>>
+  --
+  name : VARCHAR(255)
+  email : VARCHAR(255)
+  phone : VARCHAR(20)
+  address : TEXT
+  npwp : VARCHAR(50) UNIQUE
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "users" as users {
+  * id : BIGINT <<PK, AUTO_INCREMENT>>
+  --
+  company_id : BIGINT <<FK, NULLABLE>>
+  name : VARCHAR(255)
+  email : VARCHAR(255) UNIQUE
+  password : VARCHAR(255)
+  role : ENUM(staf_pembeli, manajer_pembeli,\nadmin_penjualan, admin_depo, petugas_spbu)
+  email_verified_at : TIMESTAMP NULL
+  remember_token : VARCHAR(100) NULL
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+' ─── ORDER MODULE ───────────────────────────────────────────────
+entity "orders" as orders {
+  * id : BIGINT <<PK, AUTO_INCREMENT>>
+  --
+  order_number : VARCHAR(50) UNIQUE
+  company_id : BIGINT <<FK>>
+  created_by : BIGINT <<FK>> ' staf_pembeli
+  approved_by : BIGINT <<FK, NULLABLE>> ' manajer_pembeli
+  fuel_type : VARCHAR(50)
+  volume_liters : DECIMAL(10,2)
+  unit_price : DECIMAL(12,2)
+  delivery_location : VARCHAR(255)
+  scheduled_at : DATETIME
+  status : ENUM(draft, pending_approval,\napproved, waiting_payment, paid,\ncancelled, expired)
+  rejection_reason : TEXT NULL
+  approved_at : TIMESTAMP NULL
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+' ─── INVOICE & PAYMENT MODULE (US 2.x) ─────────────────────────
+entity "invoices" as invoices {
+  * id : BIGINT <<PK, AUTO_INCREMENT>>
+  --
+  invoice_number : VARCHAR(50) UNIQUE
+  order_id : BIGINT <<FK>>
+  issued_by : BIGINT <<FK>> ' admin_penjualan
+  subtotal : DECIMAL(14,2)
+  ppn_rate : DECIMAL(5,4) DEFAULT 0.1100
+  ppn_amount : DECIMAL(14,2)
+  total_amount : DECIMAL(14,2)
+  status : ENUM(issued, paid, cancelled)
+  pdf_path : VARCHAR(255) NULL
+  issued_at : TIMESTAMP
+  paid_at : TIMESTAMP NULL
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "virtual_accounts" as virtual_accounts {
+  * id : BIGINT <<PK, AUTO_INCREMENT>>
+  --
+  invoice_id : BIGINT <<FK>>
+  va_number : VARCHAR(20) UNIQUE
+  bank_code : VARCHAR(10)
+  amount : DECIMAL(14,2)
+  expires_at : TIMESTAMP
+  status : ENUM(active, paid, expired, cancelled)
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "payment_callbacks" as payment_callbacks {
+  * id : BIGINT <<PK, AUTO_INCREMENT>>
+  --
+  virtual_account_id : BIGINT <<FK>>
+  bank_reference : VARCHAR(100)
+  amount_received : DECIMAL(14,2)
+  received_at : TIMESTAMP
+  is_valid : TINYINT(1) DEFAULT 0
+  error_message : TEXT NULL
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+' ─── LOGISTICS MODULE (Journey 3 & 4) ──────────────────────────
+entity "trucks" as trucks {
+  * id : BIGINT <<PK, AUTO_INCREMENT>>
+  --
+  plate_number : VARCHAR(20) UNIQUE
+  brand : VARCHAR(100)
+  capacity_liters : DECIMAL(10,2)
+  status : ENUM(available, in_use, maintenance)
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "drivers" as drivers {
+  * id : BIGINT <<PK, AUTO_INCREMENT>>
+  --
+  user_id : BIGINT <<FK>>
+  license_number : VARCHAR(50) UNIQUE
+  phone : VARCHAR(20)
+  status : ENUM(available, on_delivery)
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "deliveries" as deliveries {
+  * id : BIGINT <<PK, AUTO_INCREMENT>>
+  --
+  order_id : BIGINT <<FK>>
+  truck_id : BIGINT <<FK>>
+  driver_id : BIGINT <<FK>>
+  delivery_order_number : VARCHAR(50) UNIQUE
+  qr_code_token : VARCHAR(255) UNIQUE
+  status : ENUM(scheduled, departed,\nin_transit, arrived, completed, cancelled)
+  departed_at : TIMESTAMP NULL
+  arrived_at : TIMESTAMP NULL
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity "fuel_receipts" as fuel_receipts {
+  * id : BIGINT <<PK, AUTO_INCREMENT>>
+  --
+  delivery_id : BIGINT <<FK>>
+  confirmed_by : BIGINT <<FK>> ' petugas_spbu
+  ordered_volume : DECIMAL(10,2)
+  actual_volume : DECIMAL(10,2)
+  variance_percentage : DECIMAL(5,2)
+  variance_notes : TEXT NULL
+  confirmed_at : TIMESTAMP
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+' ─── RELATIONSHIPS ──────────────────────────────────────────────
+companies ||--o{ users         : "memiliki"
+companies ||--o{ orders        : "membuat"
+
+users }o--|| companies         : "bekerja di"
+users ||--o{ orders            : "created_by"
+users ||--o{ orders            : "approved_by"
+users ||--o{ invoices          : "issued_by"
+users ||--o| drivers           : "adalah"
+users ||--o{ fuel_receipts     : "confirmed_by"
+
+orders ||--o| invoices         : "menghasilkan"
+orders ||--o| deliveries       : "dikirim via"
+
+invoices ||--o{ virtual_accounts : "memiliki VA"
+
+virtual_accounts ||--o{ payment_callbacks : "menerima callback"
+
+trucks ||--o{ deliveries       : "digunakan"
+drivers ||--o{ deliveries      : "mengemudi"
+deliveries ||--o| fuel_receipts : "dikonfirmasi oleh"
+
+@enduml
