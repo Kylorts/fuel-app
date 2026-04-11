@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Order;
+use App\Models\Invoice;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreInvoiceRequest extends FormRequest
@@ -11,7 +11,8 @@ class StoreInvoiceRequest extends FormRequest
     {
         $order = $this->route('order');
 
-        return $this->user()->can('create', [Order::class, $order]);
+        // InvoicePolicy::create(User, Order) is registered under Invoice::class
+        return $this->user()->can('create', [Invoice::class, $order]);
     }
 
     public function rules(): array

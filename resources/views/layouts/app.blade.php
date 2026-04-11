@@ -15,15 +15,38 @@
                 <a href="/" class="text-xl font-bold text-blue-700 tracking-tight">
                     FuelApp B2B
                 </a>
-                <div class="flex items-center gap-4">
+                {{-- Nav Links --}}
+                @auth
+                <div class="hidden sm:flex items-center gap-1">
+                    <a href="{{ route('dashboard') }}"
+                       class="px-3 py-1.5 rounded-lg text-sm font-medium transition
+                              {{ request()->routeIs('dashboard') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100' }}">
+                        Dashboard
+                    </a>
+                    <a href="{{ route('orders.index') }}"
+                       class="px-3 py-1.5 rounded-lg text-sm font-medium transition
+                              {{ request()->routeIs('orders.*') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100' }}">
+                        Pesanan
+                    </a>
+                    <a href="{{ route('invoices.index') }}"
+                       class="px-3 py-1.5 rounded-lg text-sm font-medium transition
+                              {{ request()->routeIs('invoices.*') ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100' }}">
+                        Invoice
+                    </a>
+                </div>
+                @endauth
+
+                <div class="flex items-center gap-3">
                     @auth
-                        <span class="text-sm text-gray-500">{{ auth()->user()->name }}</span>
-                        <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
-                            {{ ucwords(str_replace('_', ' ', auth()->user()->role)) }}
-                        </span>
+                        <div class="text-right hidden sm:block">
+                            <p class="text-sm font-medium text-gray-700 leading-none">{{ auth()->user()->name }}</p>
+                            <p class="text-xs text-gray-400 mt-0.5">{{ ucwords(str_replace('_', ' ', auth()->user()->role)) }}</p>
+                        </div>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button class="text-sm text-red-500 hover:text-red-700 transition">Keluar</button>
+                            <button class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:text-red-600 hover:border-red-200 transition">
+                                Keluar
+                            </button>
                         </form>
                     @endauth
                 </div>

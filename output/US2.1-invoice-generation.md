@@ -6,119 +6,224 @@ Sebagai Admin Penjualan, saya ingin menerbitkan tagihan (Invoice) pesanan agar p
 ---
 
 * **Prompt:**
-  "Generate a Laravel feature for US 2.1 — Invoice Generation. As admin_penjualan, when I click 'Terbitkan Tagihan' on an approved order, the system must calculate PPN 11%, create a unique invoice number (INV/YYYYMM/0001), change order status to waiting_payment, and render the invoice detail view. The button must be disabled/hidden for non-approved orders or orders that already have an invoice."
+  ```
+  [1] You are software engineer expert and also expert at laravel. First, analyze the User
+      Story 2.1 in tugas 3 kelompok 9.pdf and create the PlantUML ER diagram database and
+      Class diagrams in folder diagram. Wait for my approval or proceed to generate the
+      Laravel MVC code using Tailwind and MySQL once the architecture is solid. Use laravel
+      best practice in https://github.com/guetteman/claude-code/blob/main/plugins/laravel/
+      agents/laravel-architect.md. After that, i want you to make skill.md for this laravel
+      project like in https://github.com/github/awesome-copilot/blob/main/skills/kotlin-
+      springboot/SKILL.md and put that in folder skills. last, i want you to make
+      US2.1-invoice-generation.md and put that in folder output.
+
+  [2] now, i want you to make login feature to make user story 2.1 working with relevant
+      actor and also make seeder
+
+  [3] in InvoiceController.php there are error undefined method 'authorize' and 'Storage'
+      and in OrderController.php there are error undefined method 'user'. please fix that
+
+  [4] Illuminate\Routing\Exceptions\MissingRateLimiterException. Rate limiter [login] is
+      not defined. please fix that. after that update US2.1-invoice-generation.md.
+  ```
 
 * **Context File:**
-  - `diagram/er-diagram.puml` — Entity Relationship Diagram (tables: orders, invoices)
-  - `diagram/class-diagram.puml` — Class Diagram (Invoice module)
-  - `app/Models/Order.php` — Order model with `isApproved()`, `hasInvoice()`, `subtotal()`
-  - `app/Models/Invoice.php` — Invoice model with casts and relationships
-  - `app/Enums/OrderStatus.php` — OrderStatus enum
-  - `app/Enums/InvoiceStatus.php` — InvoiceStatus enum
-  - `app/Actions/GenerateInvoiceAction.php` — Business logic action
-  - `app/Http/Controllers/InvoiceController.php` — Thin REST controller
-  - `app/Policies/InvoicePolicy.php` — Authorization policy
-  - `app/Http/Requests/StoreInvoiceRequest.php` — Form Request
-  - `resources/views/invoices/show.blade.php` — Invoice detail view
-  - `resources/views/invoices/index.blade.php` — Invoice list view
-  - `routes/web.php` — Route definitions
+  ```
+  [Attached Documents]
+  @tugas 3 kelompok 9.pdf  — Project requirements containing all User Stories including
+                             US 2.1 (Penerbitan Tagihan Otomatis), acceptance criteria,
+                             user journey, business rules, and actor definitions
+
+  [Reference Links]
+  https://github.com/guetteman/claude-code/blob/main/plugins/laravel/agents/laravel-architect.md
+                           — Laravel architecture best practices (thin controllers, rich
+                             models, Actions over Services, no Repository pattern)
+  https://github.com/github/awesome-copilot/blob/main/skills/kotlin-springboot/SKILL.md
+                           — Skill document format reference used to create skills/skill.md
+
+  [Generated Source Files]
+  app/Http/Controllers/Controller.php          — Base controller (AuthorizesRequests trait)
+  app/Http/Controllers/AuthController.php      — Login / logout
+  app/Http/Controllers/InvoiceController.php   — Invoice CRUD (index, store, show, download)
+  app/Http/Controllers/OrderController.php     — Order list and detail
+  app/Http/Requests/LoginRequest.php           — Login validation + rate limiting
+  app/Http/Requests/StoreInvoiceRequest.php    — Invoice creation authorization
+  app/Actions/GenerateInvoiceAction.php        — PPN calculation + atomic invoice creation
+  app/Policies/InvoicePolicy.php               — Authorization rules for invoice operations
+  app/Models/User.php                          — User model with role helpers
+  app/Models/Company.php                       — Company model
+  app/Models/Order.php                         — Order model with isApproved(), subtotal()
+  app/Models/Invoice.php                       — Invoice model with markAsPaid(), scopes
+  app/Models/VirtualAccount.php                — VA model (for US 2.2)
+  app/Models/PaymentCallback.php               — Callback model (for US 2.3)
+  app/Enums/OrderStatus.php                    — 7-state order status enum
+  app/Enums/InvoiceStatus.php                  — 3-state invoice status enum
+  app/Providers/AppServiceProvider.php         — InvoicePolicy + login rate limiter registration
+  database/migrations/2026_04_11_000001_create_companies_table.php
+  database/migrations/2026_04_11_000002_add_role_to_users_table.php
+  database/migrations/2026_04_11_000003_create_orders_table.php
+  database/migrations/2026_04_11_000004_create_invoices_table.php
+  database/migrations/2026_04_11_000005_create_virtual_accounts_table.php
+  database/migrations/2026_04_11_000006_create_payment_callbacks_table.php
+  database/factories/UserFactory.php           — Updated with role states
+  database/factories/CompanyFactory.php        — Company factory
+  database/factories/OrderFactory.php          — Order factory with status states
+  database/seeders/CompanySeeder.php           — 3 named + 4 random companies
+  database/seeders/UserSeeder.php              — 7 users across all relevant roles
+  database/seeders/OrderSeeder.php             — 9 orders covering all statuses + invoices
+  database/seeders/DatabaseSeeder.php          — Orchestrates seed order
+  resources/views/auth/login.blade.php         — Login page with demo account hints
+  resources/views/layouts/app.blade.php        — Base layout with nav + flash messages
+  resources/views/dashboard.blade.php          — Role-aware dashboard
+  resources/views/orders/index.blade.php       — Order list table
+  resources/views/orders/show.blade.php        — Order detail + Terbitkan Tagihan button
+  resources/views/invoices/index.blade.php     — Invoice list table
+  resources/views/invoices/show.blade.php      — Invoice detail with breakdown + download
+  routes/web.php                               — Auth + order + invoice routes
+  diagram/er-diagram.puml                      — Full system ER diagram (PlantUML)
+  diagram/class-diagram.puml                   — Invoice module class diagram (PlantUML)
+  skills/skill.md                              — Laravel project conventions & patterns
+  ```
 
 * **Skills:**
-  - `skills/skill.md` — Laravel project conventions (thin controllers, rich models, Actions, Policies, Enums, Tailwind view patterns)
+  - `skills/skill.md` — Laravel project conventions (thin controllers, rich models, Actions, Policies, Enums, Tailwind view patterns, seeding strategy)
 
 * **Task:**
-  Implement the full invoice generation flow for US 2.1:
-  1. Admin navigates to Order Detail page (order must have status `approved`)
-  2. Admin clicks "Terbitkan Tagihan" button
-  3. System runs `GenerateInvoiceAction::execute(Order, User)`:
-     - Calculates subtotal = `volume_liters × unit_price`
-     - Calculates PPN = subtotal × 0.11
-     - Calculates total = subtotal + PPN
-     - Creates `Invoice` record with status `issued` and auto-generated `invoice_number`
-     - Updates `Order.status` → `waiting_payment` (wrapped in DB transaction)
-  4. System redirects to `invoices.show` with success flash message
-  5. Invoice detail page displays full billing breakdown and PDF download button
+  1. Analyze US 2.1 from `tugas 3 kelompok 9.pdf` — identify actor (Admin Penjualan), acceptance criteria, business rules (PPN 11%, approved-only guard, no-duplicate guard)
+  2. Generate PlantUML ER diagram (`diagram/er-diagram.puml`) and class diagram (`diagram/class-diagram.puml`)
+  3. Implement Laravel MVC for invoice generation:
+     - `GenerateInvoiceAction` — calculates subtotal, PPN 11%, total; creates Invoice; transitions Order status → `waiting_payment` inside `DB::transaction()`
+     - `InvoicePolicy` — enforces role guard, status guard, duplicate guard
+     - `InvoiceController` — thin REST controller delegating to the Action
+     - Blade views with Tailwind: order detail with "Terbitkan Tagihan" button (active/disabled based on status), invoice detail with billing breakdown
+  4. Implement login feature with `AuthController`, `LoginRequest` (rate-limited), and `auth/login.blade.php`
+  5. Create seeders (`CompanySeeder`, `UserSeeder`, `OrderSeeder`) covering all order statuses and relevant roles for demo/testing
+  6. Fix Laravel 11 compatibility: add `AuthorizesRequests` trait to base `Controller`, import `Storage` facade properly, replace `$request->user()` with `auth()->user()`
+  7. Fix `MissingRateLimiterException`: register named `login` rate limiter via `RateLimiter::for()` in `AppServiceProvider::boot()`
+  8. Generate `skills/skill.md` following the format of the Kotlin Spring Boot skill reference
 
 * **Input:**
-  - `@param Order $order` — The approved fuel order (route model binding from `/orders/{order}/invoice`)
-  - `@param StoreInvoiceRequest $request` — Authenticated request (carries `$request->user()` as the issuer)
+  - `@param Order $order` — Approved fuel order resolved via route model binding from `POST /orders/{order}/invoice`
+  - `@param StoreInvoiceRequest $request` — Authenticated HTTP request; carries `auth()->user()` as the invoice issuer
 
 * **Output:**
-  - `@return RedirectResponse` — Redirect to `route('invoices.show', $invoice)` with `session('success')` on success
-  - `@return Invoice` (from `GenerateInvoiceAction::execute`) — Persisted Invoice Eloquent model
-  - `@return View` (from `InvoiceController::show`) — Rendered `invoices/show.blade.php` with invoice data
-  - `@return StreamedResponse` (from `InvoiceController::download`) — PDF file stream for download
-  - //@return Boolean true — Order status successfully changed to `waiting_payment` in DB
+  - `@return RedirectResponse` — Redirect to `route('invoices.show', $invoice)` with `session('success')` flash on success
+  - `@return Invoice` (from `GenerateInvoiceAction::execute`) — Persisted Invoice Eloquent model with calculated amounts
+  - `@return View` (from `InvoiceController::show`) — Rendered `invoices/show.blade.php` with full invoice data
+  - `@return StreamedResponse` (from `InvoiceController::download`) — PDF file download stream
+  - //@return Boolean true — `orders.status` column in DB changed to `waiting_payment` atomically with invoice creation
 
 * **Rules:**
   ```
-  // [R1] Status Guard — Invoice button only active when order.status = 'approved'
+  // [R1] Status Guard — "Terbitkan Tagihan" button only active when order.status = 'approved'
   // Enforced by: InvoicePolicy::create() → $order->isApproved()
-  // UI: button disabled/hidden in Blade via @can('create', [Invoice::class, $order])
+  // UI: @can('create', [Invoice::class, $order]) in orders/show.blade.php
 
-  // [R2] Duplicate Guard — One invoice per order
+  // [R2] Duplicate Guard — One invoice per order, no re-issuance allowed
   // Enforced by: InvoicePolicy::create() → !$order->hasInvoice()
 
-  // [R3] Role Guard — Only admin_penjualan can issue invoices
+  // [R3] Role Guard — Only role='admin_penjualan' may issue invoices
   // Enforced by: InvoicePolicy::create() → $user->isAdminPenjualan()
 
-  // [R4] PPN Rate — Fixed at 11% (PPN Indonesia)
-  // Enforced by: GenerateInvoiceAction::PPN_RATE = 0.11 (private constant)
+  // [R4] PPN Rate — Fixed at 11% (Pajak Pertambahan Nilai, Indonesia)
+  // Enforced by: GenerateInvoiceAction::PPN_RATE = 0.11 (private constant, not configurable via request)
 
-  // [R5] Atomicity — Invoice creation and order status change must be atomic
-  // Enforced by: DB::transaction() wrapping both writes in GenerateInvoiceAction
+  // [R5] Atomicity — Invoice creation and order status change are one atomic operation
+  // Enforced by: DB::transaction() wrapping both writes in GenerateInvoiceAction::execute()
 
-  // [R6] Invoice Number Format — INV/YYYYMM/0001 (sequential per month)
+  // [R6] Invoice Number Format — INV/YYYYMM/NNNN (sequential per calendar month)
   // Enforced by: GenerateInvoiceAction::buildInvoiceNumber()
 
-  // [R7] Monetary precision — All amounts stored as DECIMAL(14,2), never FLOAT
-  // Enforced by: migration column types + model casts
+  // [R7] Monetary Precision — All currency amounts stored as DECIMAL(14,2), never FLOAT
+  // Enforced by: migration column definitions + Eloquent model casts
 
-  // [R8] Draft/Pending Guard — Disable "Terbitkan Tagihan" for non-approved orders
-  // Enforced by: InvoicePolicy (HTTP layer) + button hidden in Blade (UI layer)
+  // [R8] Login Rate Limit — Max 5 attempts per minute per email+IP combination
+  // Enforced by: RateLimiter::for('login', ...) in AppServiceProvider (route middleware throttle:login)
+  //              + LoginRequest::ensureIsNotRateLimited() as a secondary application-layer check
+
+  // [R9] Authentication Guard — All order/invoice routes require authenticated session
+  // Enforced by: Route::middleware(['auth']) group in routes/web.php
   ```
 
 * **What changed:**
   ```
-  NEW  app/Actions/GenerateInvoiceAction.php     — Business logic: calculate amounts, create invoice, update order status
-  NEW  app/Enums/InvoiceStatus.php               — InvoiceStatus backed enum (issued, paid, cancelled) with label() and badgeClass()
-  NEW  app/Enums/OrderStatus.php                 — OrderStatus backed enum with all 7 states, label(), badgeColor()
-  NEW  app/Http/Controllers/InvoiceController.php — Thin controller: index, store, show, download
-  NEW  app/Http/Requests/StoreInvoiceRequest.php  — Form Request with policy-based authorization
-  NEW  app/Models/Company.php                    — Company Eloquent model with users/orders relations
-  NEW  app/Models/Invoice.php                    — Invoice model: casts, relations, markAsPaid(), scopes
-  NEW  app/Models/Order.php                      — Order model: isApproved(), hasInvoice(), subtotal(), scopes
-  NEW  app/Models/VirtualAccount.php             — VirtualAccount model for US 2.2
-  NEW  app/Models/PaymentCallback.php            — PaymentCallback model for US 2.3 webhook
-  NEW  app/Policies/InvoicePolicy.php            — Authorization: viewAny, view, create, download
-  MOD  app/Models/User.php                       — Added role, company_id, relationships, role helper methods
-  MOD  app/Providers/AppServiceProvider.php      — Registered InvoicePolicy gate
-  NEW  database/migrations/2026_04_11_000001_add_role_to_users_table.php
-  NEW  database/migrations/2026_04_11_000002_create_companies_table.php
+  [Prompt 1 — US 2.1 MVC + Diagrams]
+  NEW  diagram/er-diagram.puml                          — Full 9-entity ER diagram (PlantUML)
+  NEW  diagram/class-diagram.puml                       — Invoice module class diagram (PlantUML)
+  NEW  app/Enums/OrderStatus.php                        — 7-state backed enum with label(), badgeColor()
+  NEW  app/Enums/InvoiceStatus.php                      — 3-state backed enum with label(), badgeClass()
+  NEW  app/Models/Company.php                           — Company model (users/orders relations)
+  NEW  app/Models/Order.php                             — isApproved(), hasInvoice(), subtotal(), scopes
+  NEW  app/Models/Invoice.php                           — markAsPaid(), activeVirtualAccount(), scopes
+  NEW  app/Models/VirtualAccount.php                    — VA model for US 2.2
+  NEW  app/Models/PaymentCallback.php                   — Callback model for US 2.3
+  MOD  app/Models/User.php                              — role, company_id, role helper methods, relations
+  NEW  app/Actions/GenerateInvoiceAction.php            — PPN calc, invoice number gen, DB transaction
+  NEW  app/Policies/InvoicePolicy.php                   — viewAny, view, create, download
+  NEW  app/Http/Controllers/InvoiceController.php       — index, store, show, download
+  NEW  app/Http/Requests/StoreInvoiceRequest.php        — Policy-based authorization
+  MOD  app/Providers/AppServiceProvider.php             — Registered InvoicePolicy for Invoice::class
+  NEW  database/migrations/2026_04_11_000001_create_companies_table.php
+  NEW  database/migrations/2026_04_11_000002_add_role_to_users_table.php
   NEW  database/migrations/2026_04_11_000003_create_orders_table.php
   NEW  database/migrations/2026_04_11_000004_create_invoices_table.php
   NEW  database/migrations/2026_04_11_000005_create_virtual_accounts_table.php
   NEW  database/migrations/2026_04_11_000006_create_payment_callbacks_table.php
-  NEW  resources/views/layouts/app.blade.php     — Base layout with nav, flash messages
-  NEW  resources/views/invoices/index.blade.php  — Invoice list table (Tailwind)
-  NEW  resources/views/invoices/show.blade.php   — Invoice detail: breakdown, VA info, download button
-  MOD  routes/web.php                            — Added auth-guarded invoice routes
-  NEW  diagram/er-diagram.puml                   — Full system ER diagram (PlantUML)
-  NEW  diagram/class-diagram.puml                — Invoice module class diagram (PlantUML)
-  NEW  skills/skill.md                           — Laravel project conventions & patterns
+  NEW  resources/views/layouts/app.blade.php            — Base layout, nav, flash messages
+  NEW  resources/views/invoices/index.blade.php         — Invoice list (Tailwind table)
+  NEW  resources/views/invoices/show.blade.php          — Invoice detail, VA info, download button
+  MOD  routes/web.php                                   — auth-guarded invoice routes
+  NEW  skills/skill.md                                  — Laravel project skill document
+
+  [Prompt 2 — Login Feature + Seeders]
+  NEW  app/Http/Controllers/AuthController.php          — showLogin, login, logout
+  NEW  app/Http/Controllers/OrderController.php         — index (role-filtered), show
+  NEW  app/Http/Requests/LoginRequest.php               — Validation + 5-attempt rate limiting
+  NEW  resources/views/auth/login.blade.php             — Login page with demo account panel
+  NEW  resources/views/dashboard.blade.php              — Role-aware dashboard with quick links
+  NEW  resources/views/orders/index.blade.php           — Order list with status badges
+  NEW  resources/views/orders/show.blade.php            — Order detail + Terbitkan Tagihan flow
+  MOD  resources/views/layouts/app.blade.php            — Added nav links (Pesanan, Invoice)
+  MOD  routes/web.php                                   — Added login/logout/dashboard/order routes
+  MOD  database/factories/UserFactory.php               — Added role states (adminPenjualan, etc.)
+  NEW  database/factories/CompanyFactory.php            — Company factory
+  NEW  database/factories/OrderFactory.php              — Order factory with approved/pending states
+  NEW  database/seeders/CompanySeeder.php               — 3 named + 4 random companies
+  NEW  database/seeders/UserSeeder.php                  — 7 users: 1 admin_penjualan, 3 manajer, 3 staf
+  NEW  database/seeders/OrderSeeder.php                 — 9 orders (approved×3, waiting_payment×2,
+                                                           paid×1, pending×1, draft×1, cancelled×1)
+                                                           + 3 pre-seeded invoices
+  MOD  database/seeders/DatabaseSeeder.php              — Orchestrated: Company→User→Order
+
+  [Prompt 3 — Bug Fixes: undefined authorize, Storage, user()]
+  MOD  app/Http/Controllers/Controller.php              — Added AuthorizesRequests trait (Laravel 11
+                                                           no longer includes it by default)
+  MOD  app/Http/Controllers/InvoiceController.php       — Added Storage + StreamedResponse imports;
+                                                           removed \Storage root-namespace prefix
+  MOD  app/Http/Controllers/OrderController.php         — Replaced $request->user() with auth()->user();
+                                                           removed unused OrderStatus import
+  MOD  app/Http/Requests/StoreInvoiceRequest.php        — Fixed can() call: Order::class → Invoice::class
+
+  [Prompt 4 — Bug Fix: MissingRateLimiterException]
+  MOD  app/Providers/AppServiceProvider.php             — Added configureRateLimiters() method;
+                                                           registered RateLimiter::for('login', ...)
+                                                           keyed by email|IP, limit 5/minute;
+                                                           imported Limit, Request, RateLimiter facades
   ```
 
 * **Commit Message:**
   ```
-  feat(invoice): implement US 2.1 invoice generation (Penerbitan Tagihan Otomatis)
+  feat(us2.1): implement invoice generation, login, and seeders
 
-  - Add GenerateInvoiceAction with PPN 11% calculation and atomic DB transaction
-  - Add InvoicePolicy enforcing admin_penjualan role, approved status, and no-duplicate guards
-  - Add Order, Invoice, Company, VirtualAccount models with Eloquent casts and scopes
-  - Add InvoiceStatus and OrderStatus backed enums with label/badge helpers
-  - Add Tailwind views: invoices/index and invoices/show
-  - Add migrations: companies, orders, invoices, virtual_accounts, payment_callbacks
-  - Register InvoicePolicy in AppServiceProvider
-  - Add PlantUML ER diagram and class diagram in diagram/
-  - Add skills/skill.md with project conventions
+  - Analyze US 2.1 from requirements PDF and implement full Penerbitan Tagihan Otomatis flow
+  - Add GenerateInvoiceAction: PPN 11% calculation, INV/YYYYMM/NNNN numbering, DB transaction
+  - Add InvoicePolicy: admin_penjualan role guard, approved-status guard, duplicate guard
+  - Add InvoiceController (thin), StoreInvoiceRequest, Order/Invoice/Company models with enums
+  - Add login feature: AuthController, LoginRequest (rate-limited), login view with demo hints
+  - Add OrderController with role-filtered index and show with Terbitkan Tagihan button logic
+  - Add CompanySeeder, UserSeeder, OrderSeeder covering all statuses and actor roles
+  - Add PlantUML ER diagram (9 entities) and invoice module class diagram
+  - Add skills/skill.md with full Laravel project conventions
+  - Fix Laravel 11 compat: AuthorizesRequests trait, Storage facade import, auth()->user()
+  - Fix MissingRateLimiterException: register login rate limiter (5/min per email|IP) in AppServiceProvider
   ```

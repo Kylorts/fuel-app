@@ -8,7 +8,9 @@ use App\Models\Invoice;
 use App\Models\Order;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InvoiceController extends Controller
 {
@@ -41,12 +43,12 @@ class InvoiceController extends Controller
         return view('invoices.show', compact('invoice'));
     }
 
-    public function download(Invoice $invoice): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function download(Invoice $invoice): StreamedResponse
     {
         $this->authorize('download', $invoice);
 
-        abort_unless($invoice->pdf_path && \Storage::exists($invoice->pdf_path), 404);
+        abort_unless($invoice->pdf_path && Storage::exists($invoice->pdf_path), 404);
 
-        return \Storage::download($invoice->pdf_path, "{$invoice->invoice_number}.pdf");
+        return Storage::download($invoice->pdf_path, "{$invoice->invoice_number}.pdf");
     }
 }
