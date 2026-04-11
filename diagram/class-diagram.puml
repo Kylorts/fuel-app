@@ -8,9 +8,9 @@ skinparam classHeaderFontColor #FFFFFF
 skinparam roundcorner 8
 skinparam linetype ortho
 
-title US 2.1 — Penerbitan Tagihan Otomatis\nClass Diagram (Laravel MVC)
+title US 2.1 — Penerbitan Tagihan Otomatis\nClass Diagram (Laravel MVC — matches implemented code)
 
-' ─── ENUMS ──────────────────────────────────────────────────────
+' ─── ENUMS ───────────────────────────────────────────────────────
 enum OrderStatus {
   DRAFT = "draft"
   PENDING_APPROVAL = "pending_approval"
@@ -19,39 +19,47 @@ enum OrderStatus {
   PAID = "paid"
   CANCELLED = "cancelled"
   EXPIRED = "expired"
+  ..
+  +label() : string
+  +badgeColor() : string
 }
 
 enum InvoiceStatus {
   ISSUED = "issued"
   PAID = "paid"
   CANCELLED = "cancelled"
+  ..
+  +label() : string
+  +badgeClass() : string
 }
 
-' ─── ELOQUENT MODELS ────────────────────────────────────────────
+' ─── ELOQUENT MODELS ─────────────────────────────────────────────
 class User <<Model>> {
   +id : int
-  +company_id : int
+  +company_id : int|null
   +name : string
   +email : string
   +role : string
+  +email_verified_at : Carbon|null
   --
   +company() : BelongsTo<Company>
   +createdOrders() : HasMany<Order>
   +approvedOrders() : HasMany<Order>
   +issuedInvoices() : HasMany<Invoice>
   +driver() : HasOne<Driver>
-  +fuelReceipts() : HasMany<FuelReceipt>
   +isAdminPenjualan() : bool
   +isManajerPembeli() : bool
+  +isStafPembeli() : bool
+  +isPetugasSpbu() : bool
 }
 
 class Company <<Model>> {
   +id : int
   +name : string
   +email : string
-  +phone : string
-  +address : string
-  +npwp : string
+  +phone : string|null
+  +address : string|null
+  +npwp : string|null
   --
   +users() : HasMany<User>
   +orders() : HasMany<Order>
@@ -64,8 +72,8 @@ class Order <<Model>> {
   +created_by : int
   +approved_by : int|null
   +fuel_type : string
-  +volume_liters : float
-  +unit_price : float
+  +volume_liters : decimal
+  +unit_price : decimal
   +delivery_location : string
   +scheduled_at : Carbon
   +status : OrderStatus
@@ -76,7 +84,6 @@ class Order <<Model>> {
   +creator() : BelongsTo<User>
   +approver() : BelongsTo<User>
   +invoice() : HasOne<Invoice>
-  +delivery() : HasOne<Delivery>
   +isApproved() : bool
   +hasInvoice() : bool
   +subtotal() : float
@@ -89,10 +96,10 @@ class Invoice <<Model>> {
   +invoice_number : string
   +order_id : int
   +issued_by : int
-  +subtotal : float
-  +ppn_rate : float
-  +ppn_amount : float
-  +total_amount : float
+  +subtotal : decimal
+  +ppn_rate : decimal
+  +ppn_amount : decimal
+  +total_amount : decimal
   +status : InvoiceStatus
   +pdf_path : string|null
   +issued_at : Carbon
@@ -102,7 +109,7 @@ class Invoice <<Model>> {
   +issuer() : BelongsTo<User>
   +virtualAccounts() : HasMany<VirtualAccount>
   +markAsPaid(Carbon) : void
-  +generateInvoiceNumber() : string
+  +activeVirtualAccount() : ?VirtualAccount
   +scopeIssued(Builder) : Builder
   +scopePaid(Builder) : Builder
 }
@@ -112,7 +119,7 @@ class VirtualAccount <<Model>> {
   +invoice_id : int
   +va_number : string
   +bank_code : string
-  +amount : float
+  +amount : decimal
   +expires_at : Carbon
   +status : string
   --
@@ -126,7 +133,7 @@ class PaymentCallback <<Model>> {
   +id : int
   +virtual_account_id : int
   +bank_reference : string
-  +amount_received : float
+  +amount_received : decimal
   +received_at : Carbon
   +is_valid : bool
   +error_message : string|null
@@ -134,21 +141,44 @@ class PaymentCallback <<Model>> {
   +virtualAccount() : BelongsTo<VirtualAccount>
 }
 
-' ─── CONTROLLER (HTTP Layer) ────────────────────────────────────
+' ─── HTTP LAYER ──────────────────────────────────────────────────
+class Controller <<Abstract>> {
+  <<trait>> AuthorizesRequests
+}
+
+class AuthController <<Controller>> {
+  +showLogin() : View|RedirectResponse
+  +login(LoginRequest) : RedirectResponse
+  +logout(Request) : RedirectResponse
+}
+
+class OrderController <<Controller>> {
+  +index(Request) : View
+  +show(Order) : View
+}
+
 class InvoiceController <<Controller>> {
   +index(Request) : View
   +store(StoreInvoiceRequest, Order) : RedirectResponse
   +show(Invoice) : View
-  +download(Invoice) : StreamedResponse
+  +download(Invoice, Request) : Response
 }
 
-' ─── FORM REQUESTS ──────────────────────────────────────────────
+' ─── FORM REQUESTS ───────────────────────────────────────────────
+class LoginRequest <<FormRequest>> {
+  +authorize() : bool
+  +rules() : array
+  +authenticate() : void
+  -ensureIsNotRateLimited() : void
+  -throttleKey() : string
+}
+
 class StoreInvoiceRequest <<FormRequest>> {
   +authorize() : bool
   +rules() : array
 }
 
-' ─── POLICY ─────────────────────────────────────────────────────
+' ─── POLICY ──────────────────────────────────────────────────────
 class InvoicePolicy <<Policy>> {
   +viewAny(User) : bool
   +view(User, Invoice) : bool
@@ -156,12 +186,11 @@ class InvoicePolicy <<Policy>> {
   +download(User, Invoice) : bool
 }
 
-' ─── SERVICE / ACTION ───────────────────────────────────────────
+' ─── ACTIONS ─────────────────────────────────────────────────────
 class GenerateInvoiceAction <<Action>> {
   -PPN_RATE : float = 0.11
   --
   +execute(Order, User) : Invoice
-  -calculateAmounts(float, float) : array
   -buildInvoiceNumber() : string
 }
 
@@ -169,13 +198,18 @@ class GenerateInvoicePdfAction <<Action>> {
   +execute(Invoice) : string
 }
 
-' ─── RELATIONSHIPS ──────────────────────────────────────────────
+' ─── SERVICE PROVIDER ────────────────────────────────────────────
+class AppServiceProvider <<ServiceProvider>> {
+  +boot() : void
+  -configureRateLimiters() : void
+}
+
+' ─── MODEL RELATIONSHIPS ─────────────────────────────────────────
+Company "1" --o{ "0..*" User      : employs
+Company "1" --o{ "0..*" Order     : places
 User "1" --o{ "0..*" Order        : creates (created_by)
 User "1" --o{ "0..*" Order        : approves (approved_by)
 User "1" --o{ "0..*" Invoice      : issues (issued_by)
-Company "1" --o{ "0..*" Order     : has
-Company "1" --o{ "0..*" User      : employs
-
 Order "1" --o| "0..1" Invoice     : generates
 Invoice "1" --o{ "0..*" VirtualAccount : has
 VirtualAccount "1" --o{ "0..*" PaymentCallback : receives
@@ -183,11 +217,22 @@ VirtualAccount "1" --o{ "0..*" PaymentCallback : receives
 Order --> OrderStatus
 Invoice --> InvoiceStatus
 
-InvoiceController ..> InvoicePolicy          : authorizes via
-InvoiceController ..> StoreInvoiceRequest    : validates with
-InvoiceController ..> GenerateInvoiceAction  : delegates to
-InvoiceController ..> GenerateInvoicePdfAction : delegates to
-GenerateInvoiceAction ..> Invoice            : creates
-GenerateInvoicePdfAction ..> Invoice         : reads
+' ─── HTTP WIRING ─────────────────────────────────────────────────
+Controller <|-- AuthController
+Controller <|-- OrderController
+Controller <|-- InvoiceController
+
+InvoiceController ..> InvoicePolicy           : authorizes via
+InvoiceController ..> StoreInvoiceRequest     : validated by
+InvoiceController ..> GenerateInvoiceAction   : delegates to
+InvoiceController ..> GenerateInvoicePdfAction : on-demand regen
+
+GenerateInvoiceAction ..> Invoice             : creates
+GenerateInvoiceAction ..> GenerateInvoicePdfAction : calls after tx
+
+GenerateInvoicePdfAction ..> Invoice          : reads & updates pdf_path
+
+AppServiceProvider ..> InvoicePolicy          : registers
+AppServiceProvider ..> LoginRequest           : configures rate limiter for
 
 @enduml

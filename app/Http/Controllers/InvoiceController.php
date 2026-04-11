@@ -3,14 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Actions\GenerateInvoiceAction;
+use App\Actions\GenerateInvoicePdfAction;
 use App\Http\Requests\StoreInvoiceRequest;
 use App\Models\Invoice;
 use App\Models\Order;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InvoiceController extends Controller
 {
@@ -43,12 +44,25 @@ class InvoiceController extends Controller
         return view('invoices.show', compact('invoice'));
     }
 
-    public function download(Invoice $invoice): StreamedResponse
+    public function download(Invoice $invoice, Request $request): Response
     {
         $this->authorize('download', $invoice);
 
-        abort_unless($invoice->pdf_path && Storage::exists($invoice->pdf_path), 404);
+        // Regenerate on-the-fly if the file is missing (e.g. seeded invoices)
+        if (! $invoice->pdf_path || ! Storage::exists($invoice->pdf_path)) {
+            app(GenerateInvoicePdfAction::class)->execute($invoice);
+            $invoice->refresh();
+        }
 
-        return Storage::download($invoice->pdf_path, "{$invoice->invoice_number}.pdf");
+        $pdfContent = Storage::get($invoice->pdf_path);
+        $filename   = str_replace('/', '-', $invoice->invoice_number) . '.pdf';
+
+        // ?download=1 forces attachment; default opens inline in browser
+        $disposition = $request->boolean('download') ? 'attachment' : 'inline';
+
+        return response($pdfContent, 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => "{$disposition}; filename=\"{$filename}\"",
+        ]);
     }
 }

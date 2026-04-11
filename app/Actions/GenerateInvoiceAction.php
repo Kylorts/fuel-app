@@ -15,10 +15,11 @@ class GenerateInvoiceAction
 
     public function execute(Order $order, User $issuedBy): Invoice
     {
-        return DB::transaction(function () use ($order, $issuedBy) {
-            $subtotal   = $order->subtotal();
-            $ppnAmount  = round($subtotal * self::PPN_RATE, 2);
-            $total      = round($subtotal + $ppnAmount, 2);
+        // 1. Persist invoice + status change atomically
+        $invoice = DB::transaction(function () use ($order, $issuedBy) {
+            $subtotal  = $order->subtotal();
+            $ppnAmount = round($subtotal * self::PPN_RATE, 2);
+            $total     = round($subtotal + $ppnAmount, 2);
 
             $invoice = Invoice::create([
                 'invoice_number' => $this->buildInvoiceNumber(),
@@ -36,6 +37,12 @@ class GenerateInvoiceAction
 
             return $invoice;
         });
+
+        // 2. Generate PDF after the transaction commits (outside tx so a PDF failure
+        //    does not roll back the invoice record)
+        app(GenerateInvoicePdfAction::class)->execute($invoice);
+
+        return $invoice;
     }
 
     private function buildInvoiceNumber(): string
