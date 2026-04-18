@@ -6,6 +6,8 @@
 @php
     $user = auth()->user();
     $canIssueInvoice = $user->can('create', [\App\Models\Invoice::class, $order]);
+    $canApprove      = $user->can('approve', $order);
+    $canReject       = $user->can('reject', $order);
     $colorMap = [
         'draft'            => 'bg-gray-100 text-gray-600',
         'pending_approval' => 'bg-yellow-100 text-yellow-800',
@@ -14,6 +16,8 @@
         'paid'             => 'bg-green-100 text-green-800',
         'cancelled'        => 'bg-red-100 text-red-700',
         'expired'          => 'bg-red-100 text-red-700',
+        'sent_to_depot'    => 'bg-purple-100 text-purple-800',
+        'rejected'         => 'bg-red-100 text-red-700',
     ];
 @endphp
 
@@ -97,6 +101,52 @@
             </div>
 
             <hr class="border-gray-100">
+
+            {{-- ── US 1.3 APPROVAL ACTION AREA (Manajer Pembeli) ──────────── --}}
+            @if($canApprove || $canReject)
+            <div class="rounded-lg border border-yellow-300 bg-yellow-50 px-5 py-4">
+                <p class="text-sm font-semibold text-yellow-800 mb-4">
+                    Pesanan ini menunggu persetujuan Anda.
+                </p>
+                <div class="flex flex-wrap items-start gap-4">
+                    {{-- Approve button --}}
+                    <form method="POST" action="{{ route('orders.approve', $order) }}"
+                          onsubmit="return confirm('Setujui pesanan {{ $order->order_number }}?\nPesanan akan diteruskan ke Admin Depo.')">
+                        @csrf
+                        <button type="submit"
+                                class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5
+                                       text-sm font-semibold text-white hover:bg-green-700 transition shadow-sm">
+                            Setujui
+                        </button>
+                    </form>
+
+                    {{-- Reject form --}}
+                    <form method="POST" action="{{ route('orders.reject', $order) }}"
+                          class="flex-1 min-w-[240px]"
+                          onsubmit="return confirm('Tolak pesanan {{ $order->order_number }}?')">
+                        @csrf
+                        <div class="flex gap-2">
+                            <input type="text"
+                                   name="rejection_reason"
+                                   placeholder="Alasan penolakan (wajib)"
+                                   required
+                                   class="flex-1 rounded-lg border border-gray-300 px-3 py-2.5 text-sm
+                                          focus:outline-none focus:ring-2 focus:ring-red-400
+                                          @error('rejection_reason') border-red-400 bg-red-50 @enderror">
+                            <button type="submit"
+                                    class="inline-flex items-center gap-1 rounded-lg bg-red-600 px-4 py-2.5
+                                           text-sm font-semibold text-white hover:bg-red-700 transition shadow-sm">
+                                Tolak
+                            </button>
+                        </div>
+                        @error('rejection_reason')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </form>
+                </div>
+            </div>
+            @endif
+            {{-- ── END US 1.3 APPROVAL AREA ───────────────────────────────── --}}
 
             {{-- ── US 2.1 CORE ACTION AREA ────────────────────────────────── --}}
             <div>

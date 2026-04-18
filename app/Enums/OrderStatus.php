@@ -9,8 +9,10 @@ enum OrderStatus: string
     case APPROVED         = 'approved';
     case WAITING_PAYMENT  = 'waiting_payment';
     case PAID             = 'paid';
+    case REJECTED         = 'rejected';
     case CANCELLED        = 'cancelled';
     case EXPIRED          = 'expired';
+    case SENT_TO_DEPOT    = 'sent_to_depot';
 
     public function label(): string
     {
@@ -20,8 +22,10 @@ enum OrderStatus: string
             self::APPROVED         => 'Disetujui',
             self::WAITING_PAYMENT  => 'Menunggu Pembayaran',
             self::PAID             => 'Lunas',
+            self::REJECTED         => 'Ditolak',
             self::CANCELLED        => 'Dibatalkan',
             self::EXPIRED          => 'Kedaluwarsa',
+            self::SENT_TO_DEPOT    => 'Masuk ke Depo',
         };
     }
 
@@ -33,8 +37,10 @@ enum OrderStatus: string
             self::APPROVED         => 'blue',
             self::WAITING_PAYMENT  => 'orange',
             self::PAID             => 'green',
+            self::REJECTED         => 'red',
             self::CANCELLED        => 'red',
             self::EXPIRED          => 'red',
+            self::SENT_TO_DEPOT    => 'purple',
         };
     }
 }

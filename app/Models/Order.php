@@ -56,6 +56,11 @@ class Order extends Model
         return $this->hasOne(Invoice::class);
     }
 
+    public function isPendingApproval(): bool
+    {
+        return $this->status === OrderStatus::PENDING_APPROVAL;
+    }
+
     public function isApproved(): bool
     {
         return $this->status === OrderStatus::APPROVED;
@@ -69,6 +74,11 @@ class Order extends Model
     public function subtotal(): float
     {
         return (float) bcmul($this->volume_liters, $this->unit_price, 2);
+    }
+
+    public function scopePendingApproval(Builder $query): Builder
+    {
+        return $query->where('status', OrderStatus::PENDING_APPROVAL->value);
     }
 
     public function scopeApproved(Builder $query): Builder

@@ -6,15 +6,24 @@
 <div class="space-y-5">
 
     {{-- Header --}}
-    <div>
-        <h1 class="text-2xl font-bold text-gray-900">Pesanan Bahan Bakar</h1>
-        <p class="text-sm text-gray-500 mt-0.5">
-            @if(auth()->user()->isAdminPenjualan())
-                Semua pesanan masuk dari klien
-            @else
-                Pesanan dari {{ auth()->user()->company->name }}
-            @endif
-        </p>
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Pesanan Bahan Bakar</h1>
+            <p class="text-sm text-gray-500 mt-0.5">
+                @if(auth()->user()->isAdminPenjualan())
+                    Semua pesanan masuk dari klien
+                @else
+                    Pesanan dari {{ auth()->user()->company->name }}
+                @endif
+            </p>
+        </div>
+        @if(auth()->user()->isStafPembeli())
+            <a href="{{ route('orders.create') }}"
+               class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5
+                      text-sm font-semibold text-white hover:bg-blue-700 transition shadow-sm">
+                + Buat Pesanan
+            </a>
+        @endif
     </div>
 
     {{-- Table --}}

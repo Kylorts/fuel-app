@@ -19,7 +19,12 @@ class InvoiceController extends Controller
     {
         $this->authorize('viewAny', Invoice::class);
 
+        $user = auth()->user();
+
         $invoices = Invoice::with(['order.company', 'issuer'])
+            ->when(! $user->isAdminPenjualan(), function ($q) use ($user) {
+                $q->whereHas('order', fn ($o) => $o->where('company_id', $user->company_id));
+            })
             ->latest('issued_at')
             ->paginate(15);
 

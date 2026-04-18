@@ -25,8 +25,10 @@ return new class extends Migration
                 'approved',
                 'waiting_payment',
                 'paid',
+                'rejected',
                 'cancelled',
                 'expired',
+                'sent_to_depot',
             ])->default('draft');
             $table->text('rejection_reason')->nullable();
             $table->timestamp('approved_at')->nullable();

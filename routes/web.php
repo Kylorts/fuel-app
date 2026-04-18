@@ -19,9 +19,13 @@ Route::middleware(['auth'])->group(function () {
     // Dashboard
     Route::get('/dashboard', fn () => view('dashboard'))->name('dashboard');
 
-    // ── Orders ───────────────────────────────────────────────────
+    // ── Orders (US 1.x) ──────────────────────────────────────────
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/create', [OrderController::class, 'create'])->name('orders.create');
+    Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+    Route::post('/orders/{order}/approve', [OrderController::class, 'approve'])->name('orders.approve');
+    Route::post('/orders/{order}/reject', [OrderController::class, 'reject'])->name('orders.reject');
 
     // ── Invoices (US 2.1) ────────────────────────────────────────
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');

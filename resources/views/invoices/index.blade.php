@@ -22,7 +22,8 @@
                     <th class="px-5 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider text-xs">Pesanan</th>
                     <th class="px-5 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider text-xs">Klien</th>
                     <th class="px-5 py-3 text-right font-semibold text-gray-600 uppercase tracking-wider text-xs">Total (Rp)</th>
-                    <th class="px-5 py-3 text-center font-semibold text-gray-600 uppercase tracking-wider text-xs">Status</th>
+                    <th class="px-5 py-3 text-center font-semibold text-gray-600 uppercase tracking-wider text-xs">Status Pesanan</th>
+                    <th class="px-5 py-3 text-center font-semibold text-gray-600 uppercase tracking-wider text-xs">Status Invoice</th>
                     <th class="px-5 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider text-xs">Diterbitkan</th>
                     <th class="px-5 py-3"></th>
                 </tr>
@@ -42,6 +43,22 @@
                         <td class="px-5 py-3 text-right font-semibold text-gray-900">
                             {{ number_format($invoice->total_amount, 0, ',', '.') }}
                         </td>
+                        @php
+                            $orderBadge = match($invoice->order->status->badgeColor()) {
+                                'yellow' => 'bg-yellow-100 text-yellow-800',
+                                'blue'   => 'bg-blue-100 text-blue-800',
+                                'green'  => 'bg-green-100 text-green-800',
+                                'red'    => 'bg-red-100 text-red-800',
+                                'purple' => 'bg-purple-100 text-purple-800',
+                                'orange' => 'bg-orange-100 text-orange-800',
+                                default  => 'bg-gray-100 text-gray-700',
+                            };
+                        @endphp
+                        <td class="px-5 py-3 text-center">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $orderBadge }}">
+                                {{ $invoice->order->status->label() }}
+                            </span>
+                        </td>
                         <td class="px-5 py-3 text-center">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $invoice->status->badgeClass() }}">
                                 {{ $invoice->status->label() }}
@@ -59,7 +76,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="px-5 py-10 text-center text-gray-400 text-sm">
+                        <td colspan="8" class="px-5 py-10 text-center text-gray-400 text-sm">
                             Belum ada invoice yang diterbitkan.
                         </td>
                     </tr>

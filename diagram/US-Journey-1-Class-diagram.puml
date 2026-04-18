@@ -1,0 +1,117 @@
+@startuml Class Diagram - User Journey 1
+!theme plain
+skinparam classBackgroundColor #EEF2FF
+skinparam classBorderColor #3B5998
+skinparam classFontStyle bold
+skinparam ArrowColor #3B5998
+skinparam roundcorner 8
+
+title User Journey 1 — Pemesanan & Approval Kuota Bahan Bakar\nClass Diagram (Kelompok 9)
+
+' ─── ABSTRACT BASE ───────────────────────────────────────────────
+abstract class Controller {
+}
+
+' ─── CONTROLLERS ─────────────────────────────────────────────────
+class AuthController {
+  + showLogin() : View
+  + login(LoginRequest) : RedirectResponse
+  + logout(Request) : RedirectResponse
+}
+
+class OrderController {
+  + index(Request) : View
+  + create() : View
+  + store(StoreOrderRequest) : RedirectResponse
+  + show(Order) : View
+  + approve(Order) : RedirectResponse
+  + reject(RejectOrderRequest, Order) : RedirectResponse
+}
+
+Controller <|-- AuthController
+Controller <|-- OrderController
+
+' ─── MODELS ──────────────────────────────────────────────────────
+class User <<Model>> {
+  - role : string
+  - company_id : int
+  + company() : BelongsTo
+  + createdOrders() : HasMany
+  + approvedOrders() : HasMany
+  + isStafPembeli() : bool
+  + isManajerPembeli() : bool
+}
+
+class Company <<Model>> {
+  - name : string
+  - email : string
+  - address : string
+  + users() : HasMany
+  + orders() : HasMany
+}
+
+class Order <<Model>> {
+  - order_number : string
+  - volume_liters : decimal
+  - unit_price : decimal
+  - delivery_location : string
+  - scheduled_at : datetime
+  - status : OrderStatus
+  - rejection_reason : ?string
+  - approved_at : ?datetime
+  + company() : BelongsTo
+  + creator() : BelongsTo
+  + approver() : BelongsTo
+  + isPendingApproval() : bool
+  + isApproved() : bool
+  + subtotal() : float
+  + scopePendingApproval(Builder) : Builder
+}
+
+' ─── ENUM ────────────────────────────────────────────────────────
+enum OrderStatus <<Enum>> {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  SENT_TO_DEPOT
+  + label() : string
+  + badgeColor() : string
+}
+
+' ─── POLICY ──────────────────────────────────────────────────────
+class OrderPolicy {
+  + create(User) : bool
+  + approve(User, Order) : bool
+  + reject(User, Order) : bool
+}
+
+' ─── FORM REQUESTS ───────────────────────────────────────────────
+class StoreOrderRequest <<FormRequest>> {
+  + authorize() : bool
+  + rules() : array
+}
+
+class RejectOrderRequest <<FormRequest>> {
+  + authorize() : bool
+  + rules() : array
+}
+
+' ─── ACTION ──────────────────────────────────────────────────────
+class ApproveOrderAction {
+  + execute(Order, User) : Order
+}
+
+' ─── RELATIONSHIPS ───────────────────────────────────────────────
+OrderController ..> StoreOrderRequest      : uses
+OrderController ..> RejectOrderRequest     : uses
+OrderController ..> ApproveOrderAction     : calls
+OrderController ..> OrderPolicy            : authorized by
+
+Order --> OrderStatus                      : cast
+Order --> Company                          : belongsTo
+Order --> User                             : creator / approver
+
+User --> Company                           : belongsTo
+
+@enduml
